@@ -135,7 +135,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/abdialghi/Documents/Purwadhika/JCWD0612/03_Back_end/classbase-api/prisma/generated/client",
+      "value": "/Users/rzalwahyu/Documents/Web Portofolio/Purwadika WD/03.Backend Development/jcwdo0612-class-api/prisma/generated/client",
       "fromEnvVar": null
     },
     "config": {
@@ -149,11 +149,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/abdialghi/Documents/Purwadhika/JCWD0612/03_Back_end/classbase-api/prisma/schema.prisma",
+    "sourceFilePath": "/Users/rzalwahyu/Documents/Web Portofolio/Purwadika WD/03.Backend Development/jcwdo0612-class-api/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../..",
@@ -163,7 +163,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
+  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {

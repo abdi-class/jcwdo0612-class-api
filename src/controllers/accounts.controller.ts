@@ -13,7 +13,22 @@ class AccountsController {
     }
   }
 
-  public async deleteAccount(req: Request, res: Response) {
+  public async update(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const { username, email, password } = req.body;
+
+            const account = await prisma.accounts.update({
+                where: { id: parseInt(id) },
+                data: { username, email, password },
+            });
+            res.status(200).send("berhasil update icik bos");
+        } catch (error) {
+            res.status(500).send("internal server error");
+        }
+    }
+
+    public async deleteAccount(req: Request, res: Response) {
     try {
       await prisma.accounts.delete({
         where: {
@@ -30,6 +45,7 @@ class AccountsController {
       res.status(500).send(error);
     }
   }
+
 }
 
 export default AccountsController;
