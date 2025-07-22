@@ -20,7 +20,35 @@ class AuthController {
   }
 
   // #start Author : Arco
+  public async loginUser(req: Request, res: Response) {
+    try {
+      const login = await prisma.accounts.findUnique({
+        where: {
+          email: req.body.email,
+        },
+      });
 
+      if (!login) {
+        throw { success: false, message: "Account is Not Exist" };
+      }
+
+      if (login === null) {
+        res.status(404).send({ message: "Data Tidak Ditemukan" });
+      } else {
+        res.status(200).send({
+          success: true,
+          result: {
+            username: login.username,
+            email: login.email,
+            role: login.role,
+          },
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      res.send(error);
+    }
+  }
   // #end Author : Arco
   // #start Author : Abdi
 
