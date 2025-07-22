@@ -12,6 +12,21 @@ class AccountsController {
       res.status(500).send(error);
     }
   }
+
+    public async update(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const { username, email, password } = req.body;
+
+            const account = await prisma.accounts.update({
+                where: { id: parseInt(id) },
+                data: { username, email, password },
+            });
+            res.status(200).send("berhasil update icik bos");
+        } catch (error) {
+            res.status(500).send("internal server error");
+        }
+    }
 }
 
 export default AccountsController;
