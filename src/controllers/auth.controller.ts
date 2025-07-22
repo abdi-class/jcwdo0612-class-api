@@ -18,6 +18,13 @@ class AuthController {
       res.status(500).send(error);
     }
   }
+
+  // #start Author : Arco
+
+  // #end Author : Arco
+  // #start Author : Abdi
+
+  // #end Author : Abdi
 }
 
 export default AuthController;
