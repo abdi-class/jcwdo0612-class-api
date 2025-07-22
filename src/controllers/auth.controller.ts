@@ -51,7 +51,23 @@ class AuthController {
   }
   // #end Author : Arco
   // #start Author : Abdi
+  public async keepLogin(req: Request, res: Response) {
+    try {
+      const account = await prisma.accounts.findUnique({
+        where: {
+          id: parseInt(req.params.id),
+        },
+        omit: {
+          password: true,
+        },
+      });
 
+      res.status(200).send(account);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error);
+    }
+  }
   // #end Author : Abdi
 }
 
