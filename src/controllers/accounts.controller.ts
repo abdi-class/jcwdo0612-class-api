@@ -12,6 +12,24 @@ class AccountsController {
       res.status(500).send(error);
     }
   }
+
+  public async deleteAccount(req: Request, res: Response) {
+    try {
+      await prisma.accounts.delete({
+        where: {
+          id: parseInt(req.params.id),
+        },
+      });
+
+      res.status(200).send({
+        success: true,
+        message: "Delete success",
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error);
+    }
+  }
 }
 
 export default AccountsController;

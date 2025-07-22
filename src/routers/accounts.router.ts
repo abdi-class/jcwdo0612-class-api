@@ -14,6 +14,7 @@ class AccountsRouter {
 
   private initializeRoutes(): void {
     this.route.get("/", this.accountsController.getAllData);
+    this.route.delete("/:id", this.accountsController.deleteAccount);
   }
 
   public getRouter(): Router {
