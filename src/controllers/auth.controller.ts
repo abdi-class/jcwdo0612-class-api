@@ -1,16 +1,23 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { hashPassword } from "../utils/hash";
+import { transport } from "../config/nodemailer";
 
 class AuthController {
   // Register Function
   public async register(req: Request, res: Response) {
     try {
-      console.log(req.body);
-
       const newUser = await prisma.accounts.create({
         data: { ...req.body, password: await hashPassword(req.body.password) },
       });
+
+      await transport.sendMail({
+        from: process.env.MAILSENDER,
+        to: newUser.email,
+        subject: "Verifikasi email",
+        html: `<h1>Thank you for register account ${newUser.username}</h1>`,
+      });
+
       res.status(201).send({
         success: true,
         message: "Add Data Success",
