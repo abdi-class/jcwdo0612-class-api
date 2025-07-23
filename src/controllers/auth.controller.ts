@@ -1,12 +1,15 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
+import { hashPassword } from "../utils/hash";
 
 class AuthController {
   // Register Function
   public async register(req: Request, res: Response) {
     try {
+      console.log(req.body);
+
       const newUser = await prisma.accounts.create({
-        data: { ...req.body },
+        data: { ...req.body, password: await hashPassword(req.body.password) },
       });
       res.status(201).send({
         success: true,

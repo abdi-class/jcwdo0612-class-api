@@ -1,9 +1,10 @@
-import { Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import AuthController from "../controllers/auth.controller";
+import { regisValidation } from "../middleware/validation/auth";
 class AuthRouter {
   // define type of property
   private route: Router;
-  private authController:AuthController;
+  private authController: AuthController;
 
   constructor() {
     this.route = Router();
@@ -12,7 +13,7 @@ class AuthRouter {
   }
 
   private initializeRoutes(): void {
-    this.route.post("/", this.authController.register);
+    this.route.post("/regis", regisValidation, this.authController.register);
   }
 
   public getRouter(): Router {
