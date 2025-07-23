@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { hashPassword } from "../utils/hash";
 import { transport } from "../config/nodemailer";
+import { regisMailTemplate } from "../templates/regis.template";
 
 class AuthController {
   // Register Function
@@ -15,7 +16,7 @@ class AuthController {
         from: process.env.MAILSENDER,
         to: newUser.email,
         subject: "Verifikasi email",
-        html: `<h1>Thank you for register account ${newUser.username}</h1>`,
+        html: regisMailTemplate(newUser.username),
       });
 
       res.status(201).send({
