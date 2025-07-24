@@ -4,7 +4,7 @@ import { hashPassword } from "../utils/hash";
 import { transport } from "../config/nodemailer";
 import { regisMailTemplate } from "../templates/regis.template";
 import { compare } from "bcrypt";
-import { sign } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
 
 class AuthController {
   // Register Function
@@ -95,19 +95,55 @@ class AuthController {
     try {
       const account = await prisma.accounts.findUnique({
         where: {
-          id: parseInt(req.params.id),
+          id: parseInt(res.locals.id),
         },
         omit: {
           password: true,
         },
       });
 
-      res.status(200).send(account);
+      if (!account) {
+        throw { success: false, message: "Account not found" };
+      }
+
+      const token = sign(
+        {
+          id: account?.id,
+          isVerified: account?.isVerified,
+          role: account?.role,
+        },
+        process.env.TOKEN_KEY || "secret"
+      );
+
+      res.status(200).send({
+        username: account.username,
+        email: account.email,
+        isVerified: account.isVerified,
+        role: account.role,
+        token,
+      });
     } catch (error) {
       next(error);
     }
   }
   // #end Author : Abdi
+
+  public async verifyAccount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const account = await prisma.accounts.update({
+        where: {
+          id: parseInt(res.locals.decript.id),
+        },
+        data: { isVerified: true },
+      });
+      res.status(200).send({
+        success: true,
+        message: "Verification success",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default AuthController;
