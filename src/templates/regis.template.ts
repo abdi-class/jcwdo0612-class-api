@@ -1,4 +1,4 @@
-export const regisMailTemplate = (username: string) => {
+export const regisMailTemplate = (username: string, urlToFE: string) => {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -320,7 +320,7 @@ export const regisMailTemplate = (username: string) => {
                           <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                             <tbody>
                               <tr>
-                                <td> <a href="http://htmlemail.io" target="_blank">Call To Action</a> </td>
+                                <td> <a href="${urlToFE}" target="_blank">Verify</a> </td>
                               </tr>
                             </tbody>
                           </table>

@@ -10,8 +10,7 @@ const validationHandler = (req: Request, res: Response, next: NextFunction) => {
       next();
     }
   } catch (error) {
-    console.log(error);
-    res.status(500).send(error);
+    next(error);
   }
 };
 

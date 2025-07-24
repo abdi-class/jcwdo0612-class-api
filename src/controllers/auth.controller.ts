@@ -1,22 +1,34 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { hashPassword } from "../utils/hash";
 import { transport } from "../config/nodemailer";
 import { regisMailTemplate } from "../templates/regis.template";
+import { compare } from "bcrypt";
+import { sign } from "jsonwebtoken";
 
 class AuthController {
   // Register Function
-  public async register(req: Request, res: Response) {
+  public async register(req: Request, res: Response, next: NextFunction) {
     try {
       const newUser = await prisma.accounts.create({
         data: { ...req.body, password: await hashPassword(req.body.password) },
       });
 
+      // Create token for verify account
+      const token = sign(
+        { id: newUser.id, isVerified: newUser.isVerified },
+        process.env.TOKEN_KEY || "secret",
+        { expiresIn: "15m" }
+      );
+
+      // Define url to front end verify page
+      const urlToFE = `${process.env.FE_URL}/verify/${token}`;
+
       await transport.sendMail({
         from: process.env.MAILSENDER,
         to: newUser.email,
         subject: "Verifikasi email",
-        html: regisMailTemplate(newUser.username),
+        html: regisMailTemplate(newUser.username, urlToFE),
       });
 
       res.status(201).send({
@@ -25,13 +37,12 @@ class AuthController {
         data: newUser,
       });
     } catch (error) {
-      console.log(error);
-      res.status(500).send(error);
+      next(error);
     }
   }
 
   // #start Author : Arco
-  public async loginUser(req: Request, res: Response) {
+  public async loginUser(req: Request, res: Response, next: NextFunction) {
     try {
       const login = await prisma.accounts.findUnique({
         where: {
@@ -46,23 +57,41 @@ class AuthController {
       if (login === null) {
         res.status(404).send({ message: "Data Tidak Ditemukan" });
       } else {
+        // Validate password
+        const comparePassword = await compare(
+          req.body.password,
+          login.password
+        );
+
+        if (!comparePassword) {
+          throw { success: false, message: "Password is wrong" };
+        }
+
+        // Create token
+        const token = sign(
+          { id: login.id, isVerified: login.isVerified, role: login.role },
+          process.env.TOKEN_KEY || "secret",
+          { expiresIn: "1h" }
+        );
+
         res.status(200).send({
           success: true,
           result: {
             username: login.username,
             email: login.email,
+            isVerified: login.isVerified,
             role: login.role,
+            token,
           },
         });
       }
     } catch (error) {
-      console.log(error);
-      res.send(error);
+      next(error);
     }
   }
   // #end Author : Arco
   // #start Author : Abdi
-  public async keepLogin(req: Request, res: Response) {
+  public async keepLogin(req: Request, res: Response, next: NextFunction) {
     try {
       const account = await prisma.accounts.findUnique({
         where: {
@@ -75,8 +104,7 @@ class AuthController {
 
       res.status(200).send(account);
     } catch (error) {
-      console.log(error);
-      res.status(500).send(error);
+      next(error);
     }
   }
   // #end Author : Abdi

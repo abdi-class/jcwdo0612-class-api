@@ -13,7 +13,7 @@ class AuthRouter {
   }
 
   private initializeRoutes(): void {
-    this.route.post("/regis", regisValidation, this.authController.register);
+    this.route.post("/signup", regisValidation, this.authController.register);
   }
 
   public getRouter(): Router {

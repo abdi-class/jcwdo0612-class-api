@@ -20,6 +20,7 @@ model Accounts {
   email      String   @unique
   password   String
   img        String?
+  isVerified Boolean  @default(false)
   role       ROLE     @default(USER)
   created_at DateTime @default(now())
 }
