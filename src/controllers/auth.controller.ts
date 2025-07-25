@@ -6,31 +6,14 @@ import { regisMailTemplate } from "../templates/regis.template";
 import { compare } from "bcrypt";
 import { sign, verify } from "jsonwebtoken";
 import { resetPasswordMailTemplate } from "../templates/resetPassword.template";
+import AppError from "../errors/AppError";
+import { regisService } from "../services/auth.service";
 
 class AuthController {
   // Register Function
   public async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const newUser = await prisma.accounts.create({
-        data: { ...req.body, password: await hashPassword(req.body.password) },
-      });
-
-      // Create token for verify account
-      const token = sign(
-        { id: newUser.id, isVerified: newUser.isVerified },
-        process.env.TOKEN_KEY || "secret",
-        { expiresIn: "15m" }
-      );
-
-      // Define url to front end verify page
-      const urlToFE = `${process.env.FE_URL}/verify/${token}`;
-
-      await transport.sendMail({
-        from: process.env.MAILSENDER,
-        to: newUser.email,
-        subject: "Verifikasi email",
-        html: regisMailTemplate(newUser.username, urlToFE),
-      });
+      const newUser = await regisService(req.body);
 
       res.status(201).send({
         success: true,
@@ -52,11 +35,7 @@ class AuthController {
       });
 
       if (!login) {
-        throw { success: false, message: "Account is Not Exist" };
-      }
-
-      if (login === null) {
-        res.status(404).send({ message: "Data Tidak Ditemukan" });
+        throw new AppError("Account is Not Exist", 404);
       } else {
         // Validate password
         const comparePassword = await compare(
@@ -65,7 +44,7 @@ class AuthController {
         );
 
         if (!comparePassword) {
-          throw { success: false, message: "Password is wrong" };
+          throw new AppError("Password is wrong", 401);
         }
 
         // Create token
