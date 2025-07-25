@@ -178,12 +178,30 @@ class AuthController {
         ),
       });
 
-      res
-        .status(200)
-        .send({
-          success: true,
-          message: "Periksa email untuk pembaruan password",
-        });
+      res.status(200).send({
+        success: true,
+        message: "Periksa email untuk pembaruan password",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      await prisma.accounts.update({
+        where: {
+          id: parseInt(res.locals.decript.id),
+        },
+        data: {
+          password: await hashPassword(req.body.password),
+        },
+      });
+
+      res.status(200).send({
+        success: true,
+        message: "Reset password success",
+      });
     } catch (error) {
       next(error);
     }
