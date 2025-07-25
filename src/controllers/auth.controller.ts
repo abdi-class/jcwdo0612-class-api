@@ -178,7 +178,12 @@ class AuthController {
         ),
       });
 
-      res.status(200).send("Periksa email untuk pembaruan password");
+      res
+        .status(200)
+        .send({
+          success: true,
+          message: "Periksa email untuk pembaruan password",
+        });
     } catch (error) {
       next(error);
     }

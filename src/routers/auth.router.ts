@@ -15,6 +15,7 @@ class AuthRouter {
 
   private initializeRoutes(): void {
     this.route.post("/signup", regisValidation, this.authController.register);
+    this.route.post("/forget-password", this.authController.forgetPassword);
 
     this.route.get("/keeplogin", verifyToken, this.authController.keepLogin);
     this.route.get("/verify", verifyToken, this.authController.verifyAccount);
