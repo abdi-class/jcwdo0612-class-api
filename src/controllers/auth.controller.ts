@@ -5,6 +5,7 @@ import { transport } from "../config/nodemailer";
 import { regisMailTemplate } from "../templates/regis.template";
 import { compare } from "bcrypt";
 import { sign, verify } from "jsonwebtoken";
+import { resetPasswordMailTemplate } from "../templates/resetPassword.template";
 
 class AuthController {
   // Register Function
@@ -140,6 +141,44 @@ class AuthController {
         success: true,
         message: "Verification success",
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async forgetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const account = await prisma.accounts.findUnique({
+        where: {
+          email: req.body.email,
+        },
+      });
+
+      if (!account) {
+        throw { success: false, message: "Account not found" };
+      }
+
+      const token = sign(
+        {
+          id: account.id,
+          email: account.email,
+          role: account.role,
+        },
+        process.env.TOKEN_KEY || "secret",
+        { expiresIn: "15m" }
+      );
+
+      await transport.sendMail({
+        sender: process.env.MAILSENDER,
+        to: account.email,
+        subject: "Reset password",
+        html: resetPasswordMailTemplate(
+          account.username,
+          `${process.env.FE_URL}/reset-password/${token}`
+        ),
+      });
+
+      res.status(200).send("Periksa email untuk pembaruan password");
     } catch (error) {
       next(error);
     }
