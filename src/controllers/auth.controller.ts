@@ -96,7 +96,7 @@ class AuthController {
     try {
       const account = await prisma.accounts.findUnique({
         where: {
-          id: parseInt(res.locals.id),
+          id: parseInt(res.locals.decript.id),
         },
         omit: {
           password: true,

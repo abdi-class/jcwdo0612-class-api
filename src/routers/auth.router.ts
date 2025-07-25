@@ -15,11 +15,12 @@ class AuthRouter {
 
   private initializeRoutes(): void {
     this.route.post("/signup", regisValidation, this.authController.register);
+    this.route.post("/signin", this.authController.loginUser);
     this.route.post("/forget-password", this.authController.forgetPassword);
 
     this.route.use(verifyToken); // jika route yang dituju butuh verify token
 
-    this.route.get("/keeplogin", this.authController.keepLogin);
+    this.route.get("/keep", this.authController.keepLogin);
     this.route.get("/verify", this.authController.verifyAccount);
     this.route.patch("/reset-password", this.authController.resetPassword);
   }
