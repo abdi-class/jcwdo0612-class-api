@@ -1,6 +1,3 @@
-import { sign } from "jsonwebtoken";
-import { prisma } from "../config/prisma";
-import { hashPassword } from "../utils/hash";
 import { transport } from "../config/nodemailer";
 import { regisMailTemplate } from "../templates/regis.template";
 import { createAccount, findAccount } from "../repositories/auth.repository";
