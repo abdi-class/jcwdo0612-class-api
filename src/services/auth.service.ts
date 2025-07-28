@@ -1,91 +1,47 @@
+import { sign } from "jsonwebtoken";
 import { prisma } from "../config/prisma";
 import { hashPassword } from "../utils/hash";
-import { compare } from "bcrypt";
-import { sign, verify } from "jsonwebtoken";
-import { Accounts } from "../../prisma/generated/client";
-import type { Secret, SignOptions } from "jsonwebtoken";
 import { transport } from "../config/nodemailer";
-import {
-  regisMailTemplate,
-  resetPasswordTemplate,
-} from "../templates/regis.template";
-import { create } from "domain";
-import { createAccount } from "../repositories/auth.repository";
+import { regisMailTemplate } from "../templates/regis.template";
+import { createAccount, findAccount } from "../repositories/auth.repository";
 import { createToken } from "../utils/createToken";
+import AppError from "../errors/AppError";
+import { compare } from "bcrypt";
 
-export class AuthService {
-  // Registrasi user baru
-  async register(data: any) {
-    const newUser = await createAccount(data);
+export const regisService = async (data: any) => {
+  const newUser = await createAccount(data); // function to create data in db
 
-    const token = sign(
-      {Id:newUser.id, isVerified: newUser.isVerified},
-      process.env.TOKEN_KEY || "secret",
-      { expiresIn: "15m" }
-    );
-  }
+  // Create token for verify account
+  const token = createToken(newUser, "15m");
 
-  // Login user
-  async login(email: string, password: string) {
-    const user = await prisma.accounts.findUnique({ where: { email } });
-    if (!user) return null;
-    const isValid = await compare(password, user.password);
-    if (!isValid) return null;
-    return user;
-  }
+  // Define url to front end verify page
+  const urlToFE = `${process.env.FE_URL}/verify/${token}`;
 
-  // Verifikasi password
-  async verifyPassword(password: string, hash: string) {
-    return await compare(password, hash);
-  }
+  await transport.sendMail({
+    from: process.env.MAILSENDER,
+    to: newUser.email,
+    subject: "Verifikasi email",
+    html: regisMailTemplate(newUser.username, urlToFE),
+  });
 
-  // Generate JWT token
-  generateToken(user: any, expiresIn: any) {
-    const token = createToken(user, expiresIn);
-    return token;
-    };
-  }
+  return newUser;
+};
 
-  // Verifikasi JWT token
-  verifyToken(token: string) {
-    try {
-      return verify(token, process.env.TOKEN_KEY || "secret");
-    } catch (err) {
-      return null;
+export const loginService = async (data: any) => {
+  const login = await findAccount(data.email);
+
+  if (!login) {
+    throw new AppError("Account is Not Exist", 404);
+  } else {
+    // Validate password
+    const comparePassword = await compare(data.password, login.password);
+
+    if (!comparePassword) {
+      throw new AppError("Password is wrong", 401);
     }
+
+    // Create token
+    const token = createToken(login, "1h");
+    return { user: login, token };
   }
-
-  // Mengirim email verifikasi ke user baru
-  async sendVerificationEmail(user: Accounts, token: string) {
-    const urlToFE = `${process.env.FE_URL}/verify/${token}`;
-    await transport.sendMail({
-      from: process.env.MAILSENDER,
-      to: user.email,
-      subject: "Verifikasi email",
-      html: regisMailTemplate(user.username, urlToFE),
-    });
-
-    return {
-      success: true,
-      message: "Verification email sent",
-    };
-  }
-
-  // Mengirim email reset password ke user
-  async sendResetPasswordEmail(user: Accounts, token: string) {
-    const urlToFE = `${process.env.FE_URL}/reset-password/${token}`;
-    await transport.sendMail({
-      from: process.env.MAILSENDER,
-      to: user.email,
-      subject: "Reset Password",
-      html: resetPasswordTemplate(user.username, urlToFE),
-    });
-
-    return {
-      success: true,
-      message: "Reset password email sent",
-    };
-  }
-}
-
-export const authService = new AuthService();
+};

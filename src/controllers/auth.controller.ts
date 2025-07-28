@@ -6,32 +6,15 @@ import { regisMailTemplate } from "../templates/regis.template";
 import { resetPasswordTemplate } from "../templates/regis.template";
 import { compare } from "bcrypt";
 import { sign, verify } from "jsonwebtoken";
-import { AppError } from "../error/AppError";
+import { resetPasswordMailTemplate } from "../templates/resetPassword.template";
+import AppError from "../errors/AppError";
+import { loginService, regisService } from "../services/auth.service";
 
 class AuthController {
   // Register Function
   public async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const newUser = await prisma.accounts.create({
-        data: { ...req.body, password: await hashPassword(req.body.password) },
-      });
-
-      // Create token for verify account
-      const token = sign(
-        { id: newUser.id, isVerified: newUser.isVerified },
-        process.env.TOKEN_KEY || "secret",
-        { expiresIn: "15m" }
-      );
-
-      // Define url to front end verify page
-      const urlToFE = `${process.env.FE_URL}/verify/${token}`;
-
-      await transport.sendMail({
-        from: process.env.MAILSENDER,
-        to: newUser.email,
-        subject: "Verifikasi email",
-        html: regisMailTemplate(newUser.username, urlToFE),
-      });
+      const newUser = await regisService(req.body);
 
       res.status(201).send({
         success: true,
@@ -46,47 +29,18 @@ class AuthController {
   // #start Author : Arco
   public async loginUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const login = await prisma.accounts.findUnique({
-        where: {
-          email: req.body.email,
+      const result = await loginService(req.body);
+
+      res.status(200).send({
+        success: true,
+        result: {
+          username: result.user.username,
+          email: result.user.email,
+          isVerified: result.user.isVerified,
+          role: result.user.role,
+          token: result.token,
         },
       });
-
-      if (!login) {
-        throw new AppError("Account is Not Exist", 404, false);
-      }
-
-      if (login === null) {
-        throw new AppError("Data Tidak Ditemukan", 404, false);
-      } else {
-        // Validate password
-        const comparePassword = await compare(
-          req.body.password,
-          login.password
-        );
-
-        if (!comparePassword) {
-          throw new AppError("Password is wrong", 401, false);
-        }
-
-        // Create token
-        const token = sign(
-          { id: login.id, isVerified: login.isVerified, role: login.role },
-          process.env.TOKEN_KEY || "secret",
-          { expiresIn: "1h" }
-        );
-
-        res.status(200).send({
-          success: true,
-          result: {
-            username: login.username,
-            email: login.email,
-            isVerified: login.isVerified,
-            role: login.role,
-            token,
-          },
-        });
-      }
     } catch (error) {
       next(error);
     }
@@ -105,7 +59,7 @@ class AuthController {
       });
 
       if (!account) {
-        throw new AppError("Account not found", 404, false);
+        throw new AppError("Account not found", 404);
       }
 
       const token = sign(
@@ -147,7 +101,7 @@ class AuthController {
     }
   }
 
-  public async forgotPassword(req: Request, res: Response, next: NextFunction) {
+  public async forgetPassword(req: Request, res: Response, next: NextFunction) {
     try {
       const account = await prisma.accounts.findUnique({
         where: {
@@ -156,27 +110,32 @@ class AuthController {
       });
 
       if (!account) {
-        throw new AppError("Account not found", 404, false);
+        throw { success: false, message: "Account not found" };
       }
 
       const token = sign(
-        { id: account.id, isVerified: account.isVerified },
+        {
+          id: account.id,
+          email: account.email,
+          role: account.role,
+        },
         process.env.TOKEN_KEY || "secret",
         { expiresIn: "15m" }
       );
 
-      const urlToFE = `${process.env.FE_URL}/reset-password/${token}`;
-
       await transport.sendMail({
-        from: process.env.MAILSENDER,
+        sender: process.env.MAILSENDER,
         to: account.email,
-        subject: "Reset Password",
-        html: resetPasswordTemplate(account.username, urlToFE),
+        subject: "Reset password",
+        html: resetPasswordMailTemplate(
+          account.username,
+          `${process.env.FE_URL}/reset-password/${token}`
+        ),
       });
 
       res.status(200).send({
         success: true,
-        message: "Reset password email sent",
+        message: "Periksa email untuk pembaruan password",
       });
     } catch (error) {
       next(error);
@@ -185,16 +144,18 @@ class AuthController {
 
   public async resetPassword(req: Request, res: Response, next: NextFunction) {
     try {
-      const account = await prisma.accounts.update({
+      await prisma.accounts.update({
         where: {
           id: parseInt(res.locals.decript.id),
         },
-        data: { password: await hashPassword(req.body.password) },
+        data: {
+          password: await hashPassword(req.body.password),
+        },
       });
 
       res.status(200).send({
         success: true,
-        message: "Password reset success",
+        message: "Reset password success",
       });
     } catch (error) {
       next(error);
