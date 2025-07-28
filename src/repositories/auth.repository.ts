@@ -9,3 +9,11 @@ export const createAccount = async (data: any) => {
     },
   });
 };
+
+export const findAccount = async (email: string) => {
+  return prisma.accounts.findUnique({
+    where: {
+      email,
+    },
+  });
+};

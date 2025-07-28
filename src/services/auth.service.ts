@@ -3,7 +3,7 @@ import { prisma } from "../config/prisma";
 import { hashPassword } from "../utils/hash";
 import { transport } from "../config/nodemailer";
 import { regisMailTemplate } from "../templates/regis.template";
-import { createAccount } from "../repositories/auth.repository";
+import { createAccount, findAccount } from "../repositories/auth.repository";
 import { createToken } from "../utils/createToken";
 import AppError from "../errors/AppError";
 import { compare } from "bcrypt";
@@ -28,11 +28,7 @@ export const regisService = async (data: any) => {
 };
 
 export const loginService = async (data: any) => {
-  const login = await prisma.accounts.findUnique({
-    where: {
-      email: data.email,
-    },
-  });
+  const login = await findAccount(data.email);
 
   if (!login) {
     throw new AppError("Account is Not Exist", 404);
