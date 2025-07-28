@@ -1,5 +1,7 @@
 import { Router } from "express";
 import AccountsController from "../controllers/accounts.controller";
+import { verifyToken } from "../middleware/verifyToken";
+import { uploaderMemory } from "../middleware/uploader";
 
 class AccountsRouter {
   // define type of property
@@ -16,6 +18,12 @@ class AccountsRouter {
     this.route.get("/", this.accountsController.getAllData);
     this.route.put("/:id", this.accountsController.update);
     this.route.delete("/:id", this.accountsController.deleteAccount);
+    this.route.patch(
+      "/img-profile",
+      verifyToken,
+      uploaderMemory().single("img"),
+      this.accountsController.updateProfileImg
+    );
   }
 
   public getRouter(): Router {

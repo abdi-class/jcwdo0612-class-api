@@ -1,5 +1,7 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
+import AppError from "../errors/AppError";
+import { cloudinaryUpload } from "../config/cloudinary";
 
 class AccountsController {
   public async getAllData(req: Request, res: Response) {
@@ -14,21 +16,21 @@ class AccountsController {
   }
 
   public async update(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const { username, email, password } = req.body;
+    try {
+      const { id } = req.params;
+      const { username, email, password } = req.body;
 
-            const account = await prisma.accounts.update({
-                where: { id: parseInt(id) },
-                data: { username, email, password },
-            });
-            res.status(200).send("berhasil update icik bos");
-        } catch (error) {
-            res.status(500).send("internal server error");
-        }
+      const account = await prisma.accounts.update({
+        where: { id: parseInt(id) },
+        data: { username, email, password },
+      });
+      res.status(200).send("berhasil update icik bos");
+    } catch (error) {
+      res.status(500).send("internal server error");
     }
+  }
 
-    public async deleteAccount(req: Request, res: Response) {
+  public async deleteAccount(req: Request, res: Response) {
     try {
       await prisma.accounts.delete({
         where: {
@@ -46,6 +48,33 @@ class AccountsController {
     }
   }
 
+  public async updateProfileImg(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      if (!req.file) {
+        throw new AppError("Nofile exist", 404);
+      }
+
+      const upload = await cloudinaryUpload(req.file);
+
+      const update = await prisma.accounts.update({
+        where: {
+          id: parseInt(res.locals.decript.id),
+        },
+        data: {
+          img: upload.secure_url,
+        },
+      });
+      res
+        .status(200)
+        .send({ success: true, message: "Change img profile success" });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default AccountsController;
