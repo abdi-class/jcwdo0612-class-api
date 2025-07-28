@@ -7,7 +7,7 @@ import { compare } from "bcrypt";
 import { sign, verify } from "jsonwebtoken";
 import { resetPasswordMailTemplate } from "../templates/resetPassword.template";
 import AppError from "../errors/AppError";
-import { regisService } from "../services/auth.service";
+import { loginService, regisService } from "../services/auth.service";
 
 class AuthController {
   // Register Function
@@ -28,43 +28,18 @@ class AuthController {
   // #start Author : Arco
   public async loginUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const login = await prisma.accounts.findUnique({
-        where: {
-          email: req.body.email,
+      const result = await loginService(req.body);
+
+      res.status(200).send({
+        success: true,
+        result: {
+          username: result.user.username,
+          email: result.user.email,
+          isVerified: result.user.isVerified,
+          role: result.user.role,
+          token: result.token,
         },
       });
-
-      if (!login) {
-        throw new AppError("Account is Not Exist", 404);
-      } else {
-        // Validate password
-        const comparePassword = await compare(
-          req.body.password,
-          login.password
-        );
-
-        if (!comparePassword) {
-          throw new AppError("Password is wrong", 401);
-        }
-
-        // Create token
-        const token = sign(
-          { id: login.id, isVerified: login.isVerified, role: login.role },
-          process.env.TOKEN_KEY || "secret",
-          { expiresIn: "1h" }
-        );
-
-        res.status(200).send({
-          success: true,
-          result: {
-            username: login.username,
-            email: login.email,
-            isVerified: login.isVerified,
-            role: login.role,
-            token,
-          },
-        });
-      }
     } catch (error) {
       next(error);
     }
