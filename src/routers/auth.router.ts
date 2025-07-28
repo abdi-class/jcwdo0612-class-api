@@ -15,9 +15,17 @@ class AuthRouter {
 
   private initializeRoutes(): void {
     this.route.post("/signup", regisValidation, this.authController.register);
+    this.route.post("/login", this.authController.loginUser);
 
-    this.route.get("/keeplogin", verifyToken, this.authController.keepLogin);
+    this.route.get("/keep", verifyToken, this.authController.keepLogin);
     this.route.get("/verify", verifyToken, this.authController.verifyAccount);
+
+    this.route.post("/forgot-password", this.authController.forgotPassword);
+    this.route.patch(
+      "/reset-password",
+      verifyToken,
+      this.authController.resetPassword
+    );
   }
 
   public getRouter(): Router {

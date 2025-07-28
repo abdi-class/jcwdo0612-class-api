@@ -3,8 +3,10 @@ import { prisma } from "../config/prisma";
 import { hashPassword } from "../utils/hash";
 import { transport } from "../config/nodemailer";
 import { regisMailTemplate } from "../templates/regis.template";
+import { resetPasswordTemplate } from "../templates/regis.template";
 import { compare } from "bcrypt";
 import { sign, verify } from "jsonwebtoken";
+import { AppError } from "../error/AppError";
 
 class AuthController {
   // Register Function
@@ -51,11 +53,11 @@ class AuthController {
       });
 
       if (!login) {
-        throw { success: false, message: "Account is Not Exist" };
+        throw new AppError("Account is Not Exist", 404, false);
       }
 
       if (login === null) {
-        res.status(404).send({ message: "Data Tidak Ditemukan" });
+        throw new AppError("Data Tidak Ditemukan", 404, false);
       } else {
         // Validate password
         const comparePassword = await compare(
@@ -64,7 +66,7 @@ class AuthController {
         );
 
         if (!comparePassword) {
-          throw { success: false, message: "Password is wrong" };
+          throw new AppError("Password is wrong", 401, false);
         }
 
         // Create token
@@ -95,7 +97,7 @@ class AuthController {
     try {
       const account = await prisma.accounts.findUnique({
         where: {
-          id: parseInt(res.locals.id),
+          id: parseInt(res.locals.decript.id),
         },
         omit: {
           password: true,
@@ -103,7 +105,7 @@ class AuthController {
       });
 
       if (!account) {
-        throw { success: false, message: "Account not found" };
+        throw new AppError("Account not found", 404, false);
       }
 
       const token = sign(
@@ -139,6 +141,60 @@ class AuthController {
       res.status(200).send({
         success: true,
         message: "Verification success",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async forgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const account = await prisma.accounts.findUnique({
+        where: {
+          email: req.body.email,
+        },
+      });
+
+      if (!account) {
+        throw new AppError("Account not found", 404, false);
+      }
+
+      const token = sign(
+        { id: account.id, isVerified: account.isVerified },
+        process.env.TOKEN_KEY || "secret",
+        { expiresIn: "15m" }
+      );
+
+      const urlToFE = `${process.env.FE_URL}/reset-password/${token}`;
+
+      await transport.sendMail({
+        from: process.env.MAILSENDER,
+        to: account.email,
+        subject: "Reset Password",
+        html: resetPasswordTemplate(account.username, urlToFE),
+      });
+
+      res.status(200).send({
+        success: true,
+        message: "Reset password email sent",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const account = await prisma.accounts.update({
+        where: {
+          id: parseInt(res.locals.decript.id),
+        },
+        data: { password: await hashPassword(req.body.password) },
+      });
+
+      res.status(200).send({
+        success: true,
+        message: "Password reset success",
       });
     } catch (error) {
       next(error);

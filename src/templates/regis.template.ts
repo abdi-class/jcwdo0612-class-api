@@ -363,3 +363,103 @@ export const regisMailTemplate = (username: string, urlToFE: string) => {
   </body>
 </html>`;
 };
+
+export const resetPasswordTemplate = (username: string, urlToFE: string) => {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Reset Password Email</title>
+    <style media="all" type="text/css">
+      /* Gunakan style yang sama dengan regisMailTemplate */
+      body {
+        font-family: Helvetica, sans-serif;
+        font-size: 16px;
+        background-color: #f4f5f6;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        margin: 0 auto !important;
+        max-width: 600px;
+        padding: 0;
+        padding-top: 24px;
+        width: 600px;
+      }
+      .main {
+        background: #ffffff;
+        border: 1px solid #eaebed;
+        border-radius: 16px;
+        width: 100%;
+      }
+      .wrapper {
+        box-sizing: border-box;
+        padding: 24px;
+      }
+      .btn-primary a {
+        background-color: #0867ec;
+        border-color: #0867ec;
+        color: #ffffff;
+        border-radius: 4px;
+        padding: 12px 24px;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+      }
+      .footer {
+        clear: both;
+        padding-top: 24px;
+        text-align: center;
+        width: 100%;
+        color: #9a9ea6;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+      <tr>
+        <td>&nbsp;</td>
+        <td class="container">
+          <div class="content">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="main">
+              <tr>
+                <td class="wrapper">
+                  <h1>Halo, ${username}</h1>
+                  <p>Kami menerima permintaan untuk mereset password akun Anda.</p>
+                  <p>Jika Anda tidak meminta reset password, abaikan email ini. Password Anda tidak akan berubah sampai Anda mengklik tombol di bawah dan membuat password baru.</p>
+                  <p>Terima kasih.</p>
+                  <!-- Tombol Reset Password dipindahkan ke bawah -->
+                  <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary" style="margin-top:32px;">
+                    <tbody>
+                      <tr>
+                        <td align="center">
+                          <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                            <tbody>
+                              <tr>
+                                <td>
+                                  <a href="${urlToFE}" target="_blank">Reset Password</a>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </table>
+            <div class="footer">
+              <span>Company Inc, 7-11 Commercial Ct, Belfast BT1 2NB</span><br>
+              <span>Powered by HTMLemail.io</span>
+            </div>
+          </div>
+        </td>
+        <td>&nbsp;</td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+};
